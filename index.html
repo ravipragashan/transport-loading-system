@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    <link rel="stylesheet" href="./style.css">
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Transport Loading System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="page-header">
+  <h2>Loading & Transport Records</h2>
+  <div>
+    <button id="manageContactsBtn">Manage Contacts</button>
+    <button id="openFormBtn">Add Record</button>
+  </div>
+</header>
+
+<table>
+  <thead>
+    <tr>
+      <th>SO</th>
+      <th>Lorry</th>
+      <th>Driver</th>
+      <th>Helper</th>
+      <th>Start</th>
+      <th>End</th>
+      <th>Days</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+  <tbody id="recordTable"></tbody>
+</table>
+
+<!-- ADD / EDIT RECORD -->
+<div class="modal" id="recordModal">
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <h3>Loading Record</h3>
+      <button onclick="closeRecord()">✖</button>
+    </div>
+
+    <form id="recordForm" class="modal-body scroll">
+
+      <fieldset>
+        <legend>Basic Info</legend>
+        <label>SO Number</label>
+        <input id="soNumber" required>
+
+        <label>Lorry Number</label>
+        <input id="lorryNumber" required>
+      </fieldset>
+
+      <fieldset>
+        <legend>People</legend>
+        <label>Driver</label>
+        <select id="driverSelect"></select>
+
+        <label>Helper</label>
+        <select id="helperSelect"></select>
+      </fieldset>
+
+      <fieldset>
+        <legend>Dates</legend>
+        <label>Start Date</label>
+        <input type="date" id="startDate" required>
+
+        <label>End Date (optional)</label>
+        <input type="date" id="endDate">
+      </fieldset>
+
+      <fieldset>
+        <legend>Documents</legend>
+        <input type="file" id="docInput" multiple>
+        <ul id="docList"></ul>
+      </fieldset>
+
+    </form>
+
+    <div class="modal-footer">
+      <button onclick="closeRecord()">Cancel</button>
+      <button form="recordForm">Save</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MANAGE CONTACTS -->
+<div class="modal" id="contactModal">
+  <div class="modal-box">
+
+    <div class="modal-header">
+      <h3>Manage Contacts</h3>
+      <button onclick="closeContacts()">✖</button>
+    </div>
+
+    <div class="modal-body scroll">
+
+      <label>Type</label>
+      <select id="contactType">
+        <option value="driver">Driver</option>
+        <option value="helper">Helper</option>
+      </select>
+
+      <label>Name</label>
+      <input id="contactName">
+
+      <label>Phone</label>
+      <input id="contactPhone">
+
+      <button onclick="saveContact()">Save</button>
+
+      <hr>
+
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Phone</th><th>Action</th></tr>
+        </thead>
+        <tbody id="contactTable"></tbody>
+      </table>
+
+    </div>
+
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
+    <script  src="./script.js"></script>
+
+  </body>
+  
+</html>

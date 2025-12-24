@@ -1,0 +1,90 @@
+body {
+  background:#f2f4f7;
+  font-family:Segoe UI, sans-serif;
+  padding:20px;
+}
+
+.page-header {
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:15px;
+}
+
+button {
+  padding:6px 12px;
+  cursor:pointer;
+}
+
+table {
+  width:100%;
+  background:#fff;
+  border-collapse:collapse;
+}
+
+th,td {
+  border:1px solid #ccc;
+  padding:8px;
+  text-align:center;
+}
+
+th { background:#0b8f1d; color:#fff; }
+
+.modal {
+  display:none;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.45);
+}
+
+.modal-box {
+  background:#fff;
+  width:480px;
+  max-height:85vh;
+  margin:40px auto;
+  display:flex;
+  flex-direction:column;
+  border-radius:6px;
+}
+
+.modal-header,
+.modal-footer {
+  padding:10px;
+  border-bottom:1px solid #ddd;
+  display:flex;
+  justify-content:space-between;
+}
+
+.modal-footer { border-top:1px solid #ddd; }
+
+.modal-body {
+  padding:10px;
+}
+
+.scroll {
+  overflow-y:auto;
+}
+
+fieldset {
+  border:1px solid #ddd;
+  margin-bottom:10px;
+}
+
+legend {
+  padding:0 6px;
+  font-weight:bold;
+}
+
+label {
+  display:block;
+  margin-top:6px;
+}
+
+input,select {
+  width:100%;
+  padding:6px;
+}
+
+#docList li {
+  display:flex;
+  justify-content:space-between;
+}
