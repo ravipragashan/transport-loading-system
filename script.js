@@ -1,152 +1,116 @@
-let records = JSON.parse(localStorage.getItem("records")) || [];
-let contacts = JSON.parse(localStorage.getItem("contacts")) || {driver:[],helper:[]};
-let editRecIndex=null, editContactIndex=null;
-let tempDocs=[];
+import { db } from "./firebase.js";
+import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  doc,
+  updateDoc,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-/* ---------- CONTACTS ---------- */
-function saveContact(){
-  const type=contactType.value;
-  if(!contactName.value||!contactPhone.value)return;
+const recordsCol = collection(db,"records");
+const costCol = collection(db,"transport_costs");
 
-  if(editContactIndex===null){
-    contacts[type].push({name:contactName.value,phone:contactPhone.value});
-  } else {
-    contacts[type][editContactIndex]={name:contactName.value,phone:contactPhone.value};
-  }
+const soSelect = document.getElementById("soSelect");
+const expenseContainer = document.getElementById("expenseContainer");
 
-  localStorage.setItem("contacts",JSON.stringify(contacts));
-  editContactIndex=null;
-  contactName.value=contactPhone.value="";
-  renderContacts(); loadContacts();
-}
+const addExpenseBtn = document.getElementById("addExpenseBtn");
+const saveCostBtn = document.getElementById("saveCostBtn");
 
-function renderContacts(){
-  contactTable.innerHTML="";
-  contacts[contactType.value].forEach((c,i)=>{
-    contactTable.innerHTML+=`
-      <tr>
-        <td>${c.name}</td>
-        <td>${c.phone}</td>
-        <td>
-          <button onclick="editContact(${i})">✏️</button>
-          <button onclick="deleteContact(${i})">❌</button>
-        </td>
-      </tr>`;
+let selectedRecordId = null;
+let existingCostId = null;
+
+/* LOAD RECORDS */
+onSnapshot(recordsCol, snap=>{
+  soSelect.innerHTML="";
+  snap.forEach(d=>{
+    const r=d.data();
+    soSelect.innerHTML+=`<option value="${d.id}">${r.so}</option>`;
   });
-}
+});
 
-function editContact(i){
-  const c=contacts[contactType.value][i];
-  contactName.value=c.name;
-  contactPhone.value=c.phone;
-  editContactIndex=i;
-}
-
-function deleteContact(i){
-  contacts[contactType.value].splice(i,1);
-  localStorage.setItem("contacts",JSON.stringify(contacts));
-  renderContacts(); loadContacts();
-}
-
-function loadContacts(){
-  driverSelect.innerHTML=contacts.driver.map(d=>`<option>${d.name}|${d.phone}</option>`).join("");
-  helperSelect.innerHTML=contacts.helper.map(h=>`<option>${h.name}|${h.phone}</option>`).join("");
-}
-
-/* ---------- RECORDS ---------- */
-docInput.onchange=()=>{
-  [...docInput.files].forEach(f=>tempDocs.push(f.name));
-  renderDocs();
+/* ADD EXPENSE ROW */
+addExpenseBtn.onclick=()=>{
+  const div=document.createElement("div");
+  div.className="expense-row";
+  div.innerHTML=`
+    <input placeholder="Expense Name">
+    <input type="number" placeholder="Amount">
+  `;
+  expenseContainer.appendChild(div);
 };
 
-function renderDocs(){
-  docList.innerHTML="";
-  tempDocs.forEach((d,i)=>{
-    docList.innerHTML+=`<li>${d} <button onclick="removeDoc(${i})">❌</button></li>`;
+/* LIVE CALCULATION */
+document.body.addEventListener("input", calculate);
+
+function calculate(){
+
+  const amount = Number(document.getElementById("amount").value);
+  const cbmPPC = Number(document.getElementById("cbmPPC").value);
+  const cbmEC = Number(document.getElementById("cbmEC").value);
+
+  let total=0;
+  const expenses=[];
+
+  document.querySelectorAll(".expense-row").forEach(row=>{
+    const name=row.children[0].value;
+    const val=Number(row.children[1].value);
+    if(name && val){
+      total+=val;
+      expenses.push({title:name,amount:val});
+    }
   });
+
+  const totalCBM=cbmPPC+cbmEC;
+  if(totalCBM===0) return;
+
+  const costPerCBM=total/totalCBM;
+
+  const ppcCost=costPerCBM*cbmPPC;
+  const ecCost=costPerCBM*cbmEC;
+
+  const profit=amount-total;
+
+  document.getElementById("grandTotal").innerText=total;
+  document.getElementById("ppcCost").innerText=ppcCost.toFixed(2);
+  document.getElementById("ecCost").innerText=ecCost.toFixed(2);
+  document.getElementById("profit").innerText=profit.toFixed(2);
+
+  return {expenses,total,ppcCost,ecCost,profit};
 }
 
-function removeDoc(i){
-  tempDocs.splice(i,1);
-  renderDocs();
-}
+/* SAVE */
+saveCostBtn.onclick=async()=>{
 
-recordForm.onsubmit=e=>{
-  e.preventDefault();
-  const [dn,dp]=driverSelect.value.split("|");
-  const [hn,hp]=helperSelect.value.split("|");
+  selectedRecordId=soSelect.value;
+  const soText=soSelect.options[soSelect.selectedIndex].text;
 
-  const rec={
-    so:soNumber.value,
-    soNum:+soNumber.value.replace(/\D/g,""),
-    lorry:lorryNumber.value,
-    driver:dn, dPhone:dp,
-    helper:hn, hPhone:hp,
-    start:startDate.value,
-    end:endDate.value,
-    days:endDate.value?Math.ceil((new Date(endDate.value)-new Date(startDate.value))/86400000)+1:"In Progress",
-    docs:[...tempDocs]
+  const result=calculate();
+  if(!result) return;
+
+  const data={
+    recordId:selectedRecordId,
+    so:soText,
+    amount:Number(document.getElementById("amount").value),
+    cbmPPC:Number(document.getElementById("cbmPPC").value),
+    cbmEC:Number(document.getElementById("cbmEC").value),
+    expenses:result.expenses,
+    grandTotal:result.total,
+    ppcCost:result.ppcCost,
+    ecCost:result.ecCost,
+    profit:result.profit
   };
 
-  editRecIndex===null?records.push(rec):records[editRecIndex]=rec;
-  localStorage.setItem("records",JSON.stringify(records));
-  closeRecord(); renderTable();
+  const q=query(costCol,where("recordId","==",selectedRecordId));
+  const snap=await getDocs(q);
+
+  if(!snap.empty){
+    await updateDoc(doc(db,"transport_costs",snap.docs[0].id),data);
+  }else{
+    await addDoc(costCol,data);
+  }
+
+  alert("Saved Successfully");
 };
-
-function renderTable(){
-  recordTable.innerHTML="";
-  records.sort((a,b)=>b.soNum-a.soNum).forEach((r,i)=>{
-    recordTable.innerHTML+=`
-      <tr>
-        <td>${r.so}</td>
-        <td>${r.lorry}</td>
-        <td>${r.driver}</td>
-        <td>${r.helper}</td>
-        <td>${r.start}</td>
-        <td>${r.end||"-"}</td>
-        <td>${r.days}</td>
-        <td>
-          <button onclick="share(${i})">🟢</button>
-          <button onclick="editRec(${i})">✏️</button>
-          <button onclick="delRec(${i})">❌</button>
-        </td>
-      </tr>`;
-  });
-}
-
-function share(i){
-  const r=records[i];
-  const msg=`"${r.start}" Loaded
-Order Number - ${r.so}
-Lorry Number - ${r.lorry}
-Driver - ${r.driver} - ${r.dPhone}
-Poter - ${r.helper} - ${r.hPhone}`;
-  window.open("https://wa.me/?text="+encodeURIComponent(msg));
-}
-
-function editRec(i){
-  editRecIndex=i;
-  const r=records[i];
-  soNumber.value=r.so;
-  lorryNumber.value=r.lorry;
-  startDate.value=r.start;
-  endDate.value=r.end||"";
-  tempDocs=[...r.docs];
-  renderDocs();
-  recordModal.style.display="block";
-}
-
-function delRec(i){
-  records.splice(i,1);
-  localStorage.setItem("records",JSON.stringify(records));
-  renderTable();
-}
-
-/* ---------- UI ---------- */
-openFormBtn.onclick=()=>{editRecIndex=null;tempDocs=[];recordForm.reset();renderDocs();recordModal.style.display="block";}
-manageContactsBtn.onclick=()=>{contactModal.style.display="block";renderContacts();}
-function closeRecord(){recordModal.style.display="none";}
-function closeContacts(){contactModal.style.display="none";}
-
-/* INIT */
-loadContacts(); renderTable();
