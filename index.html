@@ -1,145 +1,48 @@
 <!DOCTYPE html>
-<html lang="en">
-
-  <head>
-    <meta charset="UTF-8">
-    <title>Untitled</title>
-    <link rel="stylesheet" href="./style.css">
-
-  </head>
-    
-  <body>
-  <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Transport Loading System</title>
-  <link rel="stylesheet" href="style.css">
+  <title>Transport Cost Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="costing.css">
 </head>
 <body>
 
-<header class="page-header">
-  <h2>Loading & Transport Records</h2>
-  <div>
-    <button id="manageContactsBtn">Manage Contacts</button>
-    <button id="openFormBtn">Add Record</button>
-  </div>
-</header>
+<h2>Transport Cost Analyzer - PRO</h2>
 
-<table>
-  <thead>
-    <tr>
-      <th>SO</th>
-      <th>Lorry</th>
-      <th>Driver</th>
-      <th>Helper</th>
-      <th>Start</th>
-      <th>End</th>
-      <th>Days</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody id="recordTable"></tbody>
-</table>
+<div class="card">
 
-<!-- ADD / EDIT RECORD -->
-<div class="modal" id="recordModal">
-  <div class="modal-box">
+  <label>Select SO</label>
+  <select id="soSelect"></select>
 
-    <div class="modal-header">
-      <h3>Loading Record</h3>
-      <button onclick="closeRecord()">✖</button>
-    </div>
+  <label>Amount</label>
+  <input type="number" id="amount">
 
-    <form id="recordForm" class="modal-body scroll">
+  <label>CBM PPC</label>
+  <input type="number" id="cbmPPC">
 
-      <fieldset>
-        <legend>Basic Info</legend>
-        <label>SO Number</label>
-        <input id="soNumber" required>
+  <label>CBM EC</label>
+  <input type="number" id="cbmEC">
 
-        <label>Lorry Number</label>
-        <input id="lorryNumber" required>
-      </fieldset>
+  <h3>Expenses</h3>
 
-      <fieldset>
-        <legend>People</legend>
-        <label>Driver</label>
-        <select id="driverSelect"></select>
+  <div id="expenseContainer"></div>
 
-        <label>Helper</label>
-        <select id="helperSelect"></select>
-      </fieldset>
+  <button id="addExpenseBtn">+ Add Expense</button>
 
-      <fieldset>
-        <legend>Dates</legend>
-        <label>Start Date</label>
-        <input type="date" id="startDate" required>
-
-        <label>End Date (optional)</label>
-        <input type="date" id="endDate">
-      </fieldset>
-
-      <fieldset>
-        <legend>Documents</legend>
-        <input type="file" id="docInput" multiple>
-        <ul id="docList"></ul>
-      </fieldset>
-
-    </form>
-
-    <div class="modal-footer">
-      <button onclick="closeRecord()">Cancel</button>
-      <button form="recordForm">Save</button>
-    </div>
-
-  </div>
 </div>
 
-<!-- MANAGE CONTACTS -->
-<div class="modal" id="contactModal">
-  <div class="modal-box">
+<div class="result-card">
 
-    <div class="modal-header">
-      <h3>Manage Contacts</h3>
-      <button onclick="closeContacts()">✖</button>
-    </div>
+  <h3>Results</h3>
+  <p>Grand Total: <span id="grandTotal"></span></p>
+  <p>PPC Cost: <span id="ppcCost"></span></p>
+  <p>EC Cost: <span id="ecCost"></span></p>
+  <p>Profit: <span id="profit"></span></p>
 
-    <div class="modal-body scroll">
+  <button id="saveCostBtn">Save / Update</button>
 
-      <label>Type</label>
-      <select id="contactType">
-        <option value="driver">Driver</option>
-        <option value="helper">Helper</option>
-      </select>
-
-      <label>Name</label>
-      <input id="contactName">
-
-      <label>Phone</label>
-      <input id="contactPhone">
-
-      <button onclick="saveContact()">Save</button>
-
-      <hr>
-
-      <table>
-        <thead>
-          <tr><th>Name</th><th>Phone</th><th>Action</th></tr>
-        </thead>
-        <tbody id="contactTable"></tbody>
-      </table>
-
-    </div>
-
-  </div>
 </div>
 
-<script src="script.js"></script>
+<script type="module" src="costing.js"></script>
 </body>
-</html>
-    <script  src="./script.js"></script>
-
-  </body>
-  
 </html>
