@@ -1,116 +1,147 @@
 import { db } from "./firebase.js";
 import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  doc,
-  updateDoc,
+  collection, addDoc, doc,
+  getDoc, updateDoc,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const recordsCol = collection(db,"records");
-const costCol = collection(db,"transport_costs");
+const costsCol = collection(db,"costs");
 
-const soSelect = document.getElementById("soSelect");
-const expenseContainer = document.getElementById("expenseContainer");
+const costTable = document.getElementById("costTable");
+const costModal = document.getElementById("costModal");
 
-const addExpenseBtn = document.getElementById("addExpenseBtn");
+const newCostBtn = document.getElementById("newCostBtn");
 const saveCostBtn = document.getElementById("saveCostBtn");
+const closeCostBtn = document.getElementById("closeCostBtn");
 
-let selectedRecordId = null;
-let existingCostId = null;
+const advanceContainer = document.getElementById("advanceContainer");
+const finalContainer = document.getElementById("finalContainer");
 
-/* LOAD RECORDS */
-onSnapshot(recordsCol, snap=>{
-  soSelect.innerHTML="";
+let editId = null;
+
+/* LOAD SUMMARY */
+onSnapshot(costsCol,snap=>{
+  costTable.innerHTML="";
   snap.forEach(d=>{
-    const r=d.data();
-    soSelect.innerHTML+=`<option value="${d.id}">${r.so}</option>`;
+    const c=d.data();
+    costTable.innerHTML+=`
+      <tr>
+        <td>${c.so}</td>
+        <td>${c.totalCost}</td>
+        <td>${c.ppcCost}</td>
+        <td>${c.ecCost}</td>
+        <td>
+          <button onclick="editCost('${d.id}')">Edit</button>
+        </td>
+      </tr>
+    `;
   });
 });
 
-/* ADD EXPENSE ROW */
-addExpenseBtn.onclick=()=>{
-  const div=document.createElement("div");
-  div.className="expense-row";
-  div.innerHTML=`
-    <input placeholder="Expense Name">
-    <input type="number" placeholder="Amount">
-  `;
-  expenseContainer.appendChild(div);
+/* OPEN NEW */
+newCostBtn.onclick=()=>{
+  editId=null;
+  clearModal();
+  costModal.style.display="flex";
 };
 
-/* LIVE CALCULATION */
-document.body.addEventListener("input", calculate);
+/* CLOSE */
+closeCostBtn.onclick=()=>costModal.style.display="none";
 
-function calculate(){
-
-  const amount = Number(document.getElementById("amount").value);
-  const cbmPPC = Number(document.getElementById("cbmPPC").value);
-  const cbmEC = Number(document.getElementById("cbmEC").value);
-
-  let total=0;
-  const expenses=[];
-
-  document.querySelectorAll(".expense-row").forEach(row=>{
-    const name=row.children[0].value;
-    const val=Number(row.children[1].value);
-    if(name && val){
-      total+=val;
-      expenses.push({title:name,amount:val});
-    }
-  });
-
-  const totalCBM=cbmPPC+cbmEC;
-  if(totalCBM===0) return;
-
-  const costPerCBM=total/totalCBM;
-
-  const ppcCost=costPerCBM*cbmPPC;
-  const ecCost=costPerCBM*cbmEC;
-
-  const profit=amount-total;
-
-  document.getElementById("grandTotal").innerText=total;
-  document.getElementById("ppcCost").innerText=ppcCost.toFixed(2);
-  document.getElementById("ecCost").innerText=ecCost.toFixed(2);
-  document.getElementById("profit").innerText=profit.toFixed(2);
-
-  return {expenses,total,ppcCost,ecCost,profit};
+/* ADD ROWS */
+function addRow(container,data={}){
+  const row=document.createElement("div");
+  row.className="expense-row";
+  row.innerHTML=`
+    <input placeholder="Expense Name" value="${data.name||""}">
+    <input type="number" placeholder="Amount" value="${data.amount||""}">
+  `;
+  container.appendChild(row);
 }
+
+document.getElementById("addAdvance").onclick=()=>addRow(advanceContainer);
+document.getElementById("addFinal").onclick=()=>addRow(finalContainer);
 
 /* SAVE */
 saveCostBtn.onclick=async()=>{
 
-  selectedRecordId=soSelect.value;
-  const soText=soSelect.options[soSelect.selectedIndex].text;
+  const so=document.getElementById("soInput").value;
+  const amount=Number(document.getElementById("amountInput").value);
+  const cbmPPC=Number(document.getElementById("cbmPPCInput").value);
+  const cbmEC=Number(document.getElementById("cbmECInput").value);
 
-  const result=calculate();
-  if(!result) return;
+  const advanceCosts=[];
+  const finalCosts=[];
+  let advanceTotal=0;
+  let finalTotal=0;
+
+  advanceContainer.querySelectorAll(".expense-row").forEach(r=>{
+    const name=r.children[0].value;
+    const value=Number(r.children[1].value);
+    if(value){
+      advanceCosts.push({name,amount:value});
+      advanceTotal+=value;
+    }
+  });
+
+  finalContainer.querySelectorAll(".expense-row").forEach(r=>{
+    const name=r.children[0].value;
+    const value=Number(r.children[1].value);
+    if(value){
+      finalCosts.push({name,amount:value});
+      finalTotal+=value;
+    }
+  });
+
+  const totalCost=advanceTotal+finalTotal;
+  const totalCBM=cbmPPC+cbmEC;
+
+  const ppcCost= totalCBM>0 ? (totalCost/totalCBM)*cbmPPC : 0;
+  const ecCost= totalCBM>0 ? (totalCost/totalCBM)*cbmEC : 0;
 
   const data={
-    recordId:selectedRecordId,
-    so:soText,
-    amount:Number(document.getElementById("amount").value),
-    cbmPPC:Number(document.getElementById("cbmPPC").value),
-    cbmEC:Number(document.getElementById("cbmEC").value),
-    expenses:result.expenses,
-    grandTotal:result.total,
-    ppcCost:result.ppcCost,
-    ecCost:result.ecCost,
-    profit:result.profit
+    so,
+    amount,
+    cbmPPC,
+    cbmEC,
+    advanceCosts,
+    finalCosts,
+    advanceTotal,
+    finalTotal,
+    totalCost,
+    ppcCost:ppcCost.toFixed(2),
+    ecCost:ecCost.toFixed(2)
   };
 
-  const q=query(costCol,where("recordId","==",selectedRecordId));
-  const snap=await getDocs(q);
-
-  if(!snap.empty){
-    await updateDoc(doc(db,"transport_costs",snap.docs[0].id),data);
+  if(editId){
+    await updateDoc(doc(db,"costs",editId),data);
   }else{
-    await addDoc(costCol,data);
+    await addDoc(costsCol,data);
   }
 
-  alert("Saved Successfully");
+  costModal.style.display="none";
 };
+
+/* EDIT */
+window.editCost=async(id)=>{
+  const snap=await getDoc(doc(db,"costs",id));
+  const c=snap.data();
+
+  editId=id;
+  clearModal();
+
+  document.getElementById("soInput").value=c.so;
+  document.getElementById("amountInput").value=c.amount;
+  document.getElementById("cbmPPCInput").value=c.cbmPPC;
+  document.getElementById("cbmECInput").value=c.cbmEC;
+
+  c.advanceCosts.forEach(a=>addRow(advanceContainer,a));
+  c.finalCosts.forEach(f=>addRow(finalContainer,f));
+
+  costModal.style.display="flex";
+};
+
+function clearModal(){
+  advanceContainer.innerHTML="";
+  finalContainer.innerHTML="";
+}
