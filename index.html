@@ -1,48 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Transport Cost Pro</title>
+  <title>SO Cost Manager</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="costing.css">
+  <link rel="stylesheet" href="cost.css">
 </head>
 <body>
 
-<h2>Transport Cost Analyzer - PRO</h2>
+<h2>SO Cost Manager</h2>
 
-<div class="card">
-
-  <label>Select SO</label>
-  <select id="soSelect"></select>
-
-  <label>Amount</label>
-  <input type="number" id="amount">
-
-  <label>CBM PPC</label>
-  <input type="number" id="cbmPPC">
-
-  <label>CBM EC</label>
-  <input type="number" id="cbmEC">
-
-  <h3>Expenses</h3>
-
-  <div id="expenseContainer"></div>
-
-  <button id="addExpenseBtn">+ Add Expense</button>
-
+<div class="top-bar">
+  <button id="newCostBtn">+ New SO Cost</button>
 </div>
 
-<div class="result-card">
-
-  <h3>Results</h3>
-  <p>Grand Total: <span id="grandTotal"></span></p>
-  <p>PPC Cost: <span id="ppcCost"></span></p>
-  <p>EC Cost: <span id="ecCost"></span></p>
-  <p>Profit: <span id="profit"></span></p>
-
-  <button id="saveCostBtn">Save / Update</button>
-
+<div class="table-wrapper">
+  <table>
+    <thead>
+      <tr>
+        <th>SO</th>
+        <th>Total Cost</th>
+        <th>PPC Cost</th>
+        <th>EC Cost</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="costTable"></tbody>
+  </table>
 </div>
 
-<script type="module" src="costing.js"></script>
+<!-- COST MODAL -->
+<div class="modal" id="costModal">
+  <div class="modal-box">
+
+    <h3>SO Cost Details</h3>
+
+    <label>SO Number</label>
+    <input id="soInput">
+
+    <label>Amount</label>
+    <input id="amountInput" type="number">
+
+    <label>CBM PPC</label>
+    <input id="cbmPPCInput" type="number">
+
+    <label>CBM EC</label>
+    <input id="cbmECInput" type="number">
+
+    <h4>Advance Costs</h4>
+    <div id="advanceContainer"></div>
+    <button id="addAdvance">+ Add Advance</button>
+
+    <h4>Final Costs</h4>
+    <div id="finalContainer"></div>
+    <button id="addFinal">+ Add Final</button>
+
+    <div class="result-box">
+      <p>Total Cost: <span id="totalCost">0</span></p>
+      <p>PPC Cost: <span id="ppcCost">0</span></p>
+      <p>EC Cost: <span id="ecCost">0</span></p>
+    </div>
+
+    <div class="modal-actions">
+      <button id="saveCostBtn">Save</button>
+      <button id="closeCostBtn">Close</button>
+    </div>
+
+  </div>
+</div>
+
+<script type="module" src="cost.js"></script>
 </body>
 </html>
